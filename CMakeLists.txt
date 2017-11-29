@@ -32,10 +32,15 @@ if(BUILD_DOCUMENTATION)
         VERBATIM)
 endif()
 
+include_directories(
+    header
+)
+
 # Declaration of executables (main file + postprocess)
 add_executable(
 	SimultIte
 	src/main.c
+    src/executable_options.c
 )
 
 # Linkage
