@@ -37,3 +37,8 @@ make
 make doc
 ```
 Browse the documentation by opening the file *build/docs/html/index.html*.
+
+
+## Credit
+
+* [Matrix Market Library](http://math.nist.gov/MatrixMarket/mmio-c.html)
