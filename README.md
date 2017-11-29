@@ -1,0 +1,2 @@
+# SimultIte
+Simultaneous Iteration Method
