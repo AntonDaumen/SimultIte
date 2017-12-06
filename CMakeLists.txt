@@ -32,8 +32,40 @@ if(BUILD_DOCUMENTATION)
         VERBATIM)
 endif()
 
+find_package(OpenCL REQUIRED)
+find_package(MPI REQUIRED)
+
+if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclSPARSE.so)
+    message(STATUS "Downloading clSPARSE library")
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tmp)
+    file(DOWNLOAD 
+        https://github.com/clMathLibraries/clSPARSE/releases/download/v0.10.2.0/clSPARSE-0.10.2.0-Linux-x64.tar.gz 
+        ${CMAKE_CURRENT_SOURCE_DIR}/tmp/clSPARSE.tar.gz
+        SHOW_PROGRESS)
+
+    message(STATUS "Decompressing clSPARSE library")
+    execute_process(COMMAND 
+        tar -xf ${CMAKE_CURRENT_SOURCE_DIR}/tmp/clSPARSE.tar.gz -C ${CMAKE_CURRENT_SOURCE_DIR}/tmp/ clSPARSE-0.10.2.0-Linux-x64/include/ )
+    execute_process(COMMAND 
+        rsync -a ${CMAKE_CURRENT_SOURCE_DIR}/tmp/clSPARSE-0.10.2.0-Linux-x64/include/ ${CMAKE_CURRENT_SOURCE_DIR}/lib/header/)
+    execute_process(COMMAND 
+        tar -xf ${CMAKE_CURRENT_SOURCE_DIR}/tmp/clSPARSE.tar.gz -C ${CMAKE_CURRENT_SOURCE_DIR}/tmp/ clSPARSE-0.10.2.0-Linux-x64/lib64/)
+    execute_process(COMMAND
+        rm -rf  ${CMAKE_CURRENT_SOURCE_DIR}/tmp/clSPARSE-0.10.2.0-Linux-x64/lib64/cmake)
+    execute_process(COMMAND 
+        rsync -a ${CMAKE_CURRENT_SOURCE_DIR}/tmp/clSPARSE-0.10.2.0-Linux-x64/lib64/ ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/)
+    message(STATUS "Deleting temporary files")
+    file(REMOVE_RECURSE
+        ${CMAKE_CURRENT_SOURCE_DIR}/tmp)
+else(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclSPARSE.so)
+    message(STATUS "clSPARSE found")
+endif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclSPARSE.so)
+set(clSPARSE_LIBRARIES ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclSPARSE.so ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclsparseTimer.so)
+
 include_directories(
     header
+    lib/header
+    OpenCL_INCLUDE_DIRS
 )
 
 # Declaration of executables (main file + postprocess)
@@ -46,4 +78,7 @@ add_executable(
 # Linkage
 target_link_libraries(
 	SimultIte
+    ${OpenCL_LIBRARIES}
+    ${MPI_LIBRARIES}
+    ${clSPARSE_LIBRARIES}
 )
