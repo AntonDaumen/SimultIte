@@ -73,6 +73,8 @@ add_executable(
 	SimultIte
 	src/main.c
     src/executable_options.c
+    src/matrix_reader.c
+    lib/src/mmio.c
 )
 
 # Linkage
