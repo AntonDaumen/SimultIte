@@ -39,21 +39,29 @@ find_package(MPI REQUIRED)
 if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE)
     message(STATUS "Downloading clSPARSE library")
     execute_process(COMMAND git clone https://github.com/clMathLibraries/clSPARSE.git ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE OUTPUT_FILE /dev/null)
-    execute_process(COMMAND cmake ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE -B${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/ -DBUILD_gMock=NO -DGMOCK_ROOT=/dev/null)
 else(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE)
     message(STATUS "clSPARSE source files found")
 endif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE)
-set(clSPARSE_LIBRARIES ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclSPARSE.so ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclsparseTimer.so)
+
 
 message(STATUS "Compiling clSPARSE")
+execute_process(COMMAND sed -i 188s/ON/OFF/g ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/src/CMakeLists.txt)
+execute_process(COMMAND sed -i 189s/ON/OFF/g ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/src/CMakeLists.txt)
+execute_process(COMMAND cmake ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE -B${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/ -DBUILD_gMock=NO -DGMOCK_ROOT=/dev/null)
 execute_process(COMMAND make 
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/)
 
+
+set(clSPARSE_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/src/include)
+execute_process(cp ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/libraries/libclSPARSE.so ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclSPARSE.so)
+execute_process(cp ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/clsparseTimer/libclsparseTimer.so ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclsparseTimer.so)
+set(clSPARSE_LIBRARIES ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclSPARSE.so ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclsparseTimer.so)
 
 include_directories(
     header
     lib/header
     OpenCL_INCLUDE_DIRS
+    clSPARSE_INCLUDE_DIR
 )
 
 # Declaration of executables (main file + postprocess)
