@@ -52,7 +52,7 @@ execute_process(COMMAND make
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/)
 
 
-set(clSPARSE_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/src/include)
+set(clSPARSE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/src/include/ ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/clSPARSE-build/library/)
 execute_process(COMMAND ln -s ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/clSPARSE-build/library/libclSPARSE.so ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclSPARSE.so ERROR_FILE /dev/null)
 execute_process(COMMAND ln -s ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/clSPARSE-build/clsparseTimer/libclsparseTimer.so ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclsparseTimer.so ERROR_FILE /dev/null)
 execute_process(COMMAND ln -s ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/clSPARSE-build/library/libclSPARSE.so.1 ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclSPARSE.so.1 ERROR_FILE /dev/null)
@@ -62,11 +62,11 @@ set(clSPARSE_LIBRARIES ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclSPARSE.so ${CMAK
 include_directories(
     header
     lib/header
-    OpenCL_INCLUDE_DIRS
-    clSPARSE_INCLUDE_DIR
+    ${OpenCL_INCLUDE_DIRS}
+    ${clSPARSE_INCLUDE_DIRS}
 )
 
-# Declaration of executables (main file + postprocess)
+# Declaration of executables
 add_executable(
 	SimultIte
 	src/main.c
