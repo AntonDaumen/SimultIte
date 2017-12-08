@@ -72,3 +72,6 @@ build/*
 # clSPARSE libary files
 lib/bin/*
 lib/header/cl*
+
+# ctags file
+tags

@@ -5,6 +5,8 @@
  *
  */
 #include "executable_options.h"
+#include "matrix_reader.h"
+
 CommandLineOptions_t CommandLineOptions;
 
 /**
@@ -16,5 +18,6 @@ int main(
 		char *env[])
 {
 	parse_argument(argc, argv, env);
+    read_Matrix(CommandLineOptions.infilePath);
 	return 0;
 }
