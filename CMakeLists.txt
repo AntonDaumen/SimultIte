@@ -35,7 +35,7 @@ endif()
 find_package(OpenCL REQUIRED)
 find_package(MPI REQUIRED)
 
-if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclSPARSE.so)
+if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE)
     message(STATUS "Downloading clSPARSE library")
     execute_process(COMMAND git clone https://github.com/clMathLibraries/clSPARSE.git ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE OUTPUT_FILE /dev/null)
 else(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE)
@@ -52,8 +52,8 @@ execute_process(COMMAND make
 
 
 set(clSPARSE_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/src/include)
-execute_process(cp ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/libraries/libclSPARSE.so ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclSPARSE.so)
-execute_process(cp ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/clsparseTimer/libclsparseTimer.so ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclsparseTimer.so)
+execute_process(COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/clSPARSE-build/library/libclSPARSE.so ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclSPARSE.so)
+execute_process(COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/clSPARSE-build/clsparseTimer/libclsparseTimer.so ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclsparseTimer.so)
 set(clSPARSE_LIBRARIES ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclSPARSE.so ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclsparseTimer.so)
 
 include_directories(
