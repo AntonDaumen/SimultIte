@@ -1,4 +1,4 @@
-/** 
+/**
  * \author Daumen Anton and Nicolas Derumigny
  * \file main.c
  * \brief Definition of the \a main() function for the SimultIte executable.
@@ -18,11 +18,15 @@ CommandLineOptions_t CommandLineOptions;
 /**
  * \brief Main Function
  */
-int main( int argc, char* argv[ ] )
+
+int main(
+        int  argc,
+        char *argv[],
+        char *env[])
 {
     printf("Executing sample clSPARSE Norm1 C\n");
 
-/**  Step 1. Setup OpenCL environment; **/
+    /**  Step 1. Setup OpenCL environment; **/
 
     cl_int cl_status = CL_SUCCESS;
 
@@ -92,22 +96,22 @@ int main( int argc, char* argv[ ] )
     clsparseInitScalar(&norm_x);
 
     x.values = clCreateBuffer(context, CL_MEM_READ_WRITE, N * sizeof (float),
-                              NULL, &cl_status);
+            NULL, &cl_status);
     x.num_values = N;
 
     // Fill x buffer with ones;
-    float one = 1.0f;
+    float one = 2.0f;
     cl_status = clEnqueueFillBuffer(queue, x.values, &one, sizeof(float),
-                                    0, N * sizeof(float), 0, NULL, NULL);
+            0, N * sizeof(float), 0, NULL, NULL);
 
     // Allocate memory for result. No need for initializing with 0,
     // it is done internally in nrm1 function.
     norm_x.value = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float),
-                                  NULL, &cl_status);
+            NULL, &cl_status);
 
 
     /** Step 3. Init clSPARSE library **/
-	clsparseStatus status = clsparseSetup();
+    clsparseStatus status = clsparseSetup();
 
     if (status != clsparseSuccess)
     {
@@ -116,22 +120,20 @@ int main( int argc, char* argv[ ] )
     }
 
     // Create clSPARSE control object it require queue for kernel execution
-    printf("Between Here ...\n");
     clsparseCreateResult createResult = clsparseCreateControl( queue );
-    printf("... and Here\n");
     CLSPARSE_V( createResult.status, "Failed to create clsparse control" );
 
     status = cldenseSnrm1(&norm_x, &x, createResult.control );
 
     // Read  result
     float* host_norm_x =
-            clEnqueueMapBuffer(queue, norm_x.value, CL_TRUE, CL_MAP_READ, 0, sizeof(float),
-                       0, NULL, NULL, &cl_status);
+        clEnqueueMapBuffer(queue, norm_x.value, CL_TRUE, CL_MAP_READ, 0, sizeof(float),
+                0, NULL, NULL, &cl_status);
 
     printf ("\tResult : %f\n", *host_norm_x);
 
     cl_status = clEnqueueUnmapMemObject(queue, norm_x.value, host_norm_x,
-                                        0, NULL, NULL);
+            0, NULL, NULL);
 
     status = clsparseReleaseControl( createResult.control );
 

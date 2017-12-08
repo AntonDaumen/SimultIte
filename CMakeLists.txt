@@ -37,7 +37,7 @@ find_package(MPI REQUIRED)
 
 if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE)
     message(STATUS "Downloading clSPARSE library")
-    execute_process(COMMAND git clone https://github.com/clMathLibraries/clSPARSE.git ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE 
+    execute_process(COMMAND git clone https://github.com/NicolasDerumigny/clSPARSE.git ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE 
         ERROR_FILE /dev/null)
 else(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE)
     message(STATUS "clSPARSE source files found")
@@ -45,19 +45,16 @@ endif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE)
 
 
 message(STATUS "Compiling clSPARSE")
-execute_process(COMMAND sed -i 188s/ON/OFF/g ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/src/CMakeLists.txt)
-execute_process(COMMAND sed -i 189s/ON/OFF/g ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/src/CMakeLists.txt)
-execute_process(COMMAND cmake ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE -B${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/ -DBUILD_gMock=NO -DGMOCK_ROOT=/dev/null)
+execute_process(COMMAND cmake ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE -B${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/)
 execute_process(COMMAND make 
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/)
 
 
 set(clSPARSE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/src/include/ ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/clSPARSE-build/library/)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin)
 execute_process(COMMAND ln -s ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/clSPARSE-build/library/libclSPARSE.so ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclSPARSE.so ERROR_FILE /dev/null)
-execute_process(COMMAND ln -s ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/clSPARSE-build/clsparseTimer/libclsparseTimer.so ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclsparseTimer.so ERROR_FILE /dev/null)
 execute_process(COMMAND ln -s ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/clSPARSE-build/library/libclSPARSE.so.1 ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclSPARSE.so.1 ERROR_FILE /dev/null)
-execute_process(COMMAND ln -s ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/clSPARSE-build/clsparseTimer/libclsparseTimer.so.1 ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclsparseTimer.so.1 ERROR_FILE /dev/null)
-set(clSPARSE_LIBRARIES ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclSPARSE.so ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclsparseTimer.so)
+set(clSPARSE_LIBRARIES ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/libclSPARSE.so)
 
 include_directories(
     header
