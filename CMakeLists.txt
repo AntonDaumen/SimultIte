@@ -35,9 +35,17 @@ endif()
 find_package(OpenCL REQUIRED)
 find_package(MPI REQUIRED)
 
+message(STATUS "Cleaning up previous files...")
+execute_process(COMMAND rm -rf ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/
+      ERROR_FILE /dev/null)
+execute_process(COMMAND rm -rf ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin/
+      ERROR_FILE /dev/null)
+
+
+
 if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE)
     message(STATUS "Downloading clSPARSE library")
-    execute_process(COMMAND git clone https://github.com/NicolasDerumigny/clSPARSE.git ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE 
+    execute_process(COMMAND git clone https://github.com/NicolasDerumigny/clSPARSE.git ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/
         ERROR_FILE /dev/null)
 else(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE)
     message(STATUS "clSPARSE source files found")
