@@ -22,7 +22,7 @@ void gram_schmidt(
 	cl_context      *context,
 	clsparseControl control);
 
-clsparseStatus clsparseScalarDinv(
+clsparseStatus clsparseScalarSinv(
 	clsparseScalar  *scalar,
 	clsparseControl control);
 

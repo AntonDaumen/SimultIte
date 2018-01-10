@@ -15,9 +15,9 @@
 #include "clSPARSE-error.h"
 
 /// \brief Vector with one value constant to one
-extern cldenseVector  oneD_V;
+extern cldenseVector  oneS_V;
 /// \brief Scalar with constant to minus one
-extern clsparseScalar minusOneD_S;
+extern clsparseScalar minusOneS_S;
 
 /** \brief Initialize the OpenCL structures to use with the first available GPU
  */
