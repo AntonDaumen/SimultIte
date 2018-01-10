@@ -75,9 +75,10 @@ include_directories(
 add_executable(
 	SimultIte
 	src/main.c
-    src/executable_options.c
-    src/matrix_reader.c
-    lib/src/mmio.c
+	src/executable_options.c
+	src/matrix_reader.c
+	src/cl_utils.c
+	lib/src/mmio.c
 )
 
 # Linkage
