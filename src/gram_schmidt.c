@@ -14,6 +14,8 @@ void gram_schmidt(
 		clsparseControl control)
 {
 	cl_int         cl_status;
+	clsparseEnableAsync(control, CL_TRUE);
+
 
 	clsparseScalar norm;
 	clsparseInitScalar(&norm);
