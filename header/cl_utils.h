@@ -11,9 +11,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #include "clSPARSE.h"
 #include "clSPARSE-error.h"
+
+/// \brief Vector with one value constant to one
+extern cldenseVector  oneD_V;
+/// \brief Scalar with constant to minus one
+extern clsparseScalar minusOneD_S;
 
 /** \brief Initialize the OpenCL structures to use with the first available GPU
  */

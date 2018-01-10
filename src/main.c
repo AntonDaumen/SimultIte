@@ -4,25 +4,26 @@
  * \brief Definition of the \a main() function for the SimultIte executable.
  *
  */
-#include "executable_options.h"
-#include "matrix_reader.h"
-#include "cl_utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-CommandLineOptions_t CommandLineOptions;
+#include "executable_options.h"
+#include "matrix_reader.h"
+#include "cl_utils.h"
+#include "gram_schmidt.h"
 
 /**
  * \brief Main Function
  */
-
 int main(
         int  argc,
         char *argv[],
         char *env[])
 {
+    parse_argument(argc, argv, env);
+
     cl_platform_id       *platforms;
     cl_device_id         *devices;
     cl_context           context;
@@ -32,48 +33,49 @@ int main(
     cl_init(&platforms, &devices, &context, &queue, &createResult);
 
     /** Allocate GPU buffers **/
-    int N = 1024;
-    cldenseVector x;
-    clsparseInitVector(&x);
+    cl_int         cl_status = CL_SUCCESS;
     clsparseScalar norm_x;
     clsparseInitScalar(&norm_x);
-
-    cl_int         cl_status = CL_SUCCESS;
-    clsparseStatus status;
-    x.values = clCreateBuffer(context, CL_MEM_READ_WRITE, N * sizeof(float),
-            NULL, &cl_status);
-    x.num_values = N;
-
-    // Fill x buffer with ones;
-    float one = 1.0f;
-    cl_status = clEnqueueFillBuffer(queue, x.values, &one, sizeof(float),
-            0, N * sizeof(float), 0, NULL, NULL);
-
-    // Allocate memory for result. No need for initializing with 0,
-    // it is done internally in nrm1 function.
-    norm_x.value = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float),
-            NULL, &cl_status);
+    norm_x.value = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(double),
+                NULL, &cl_status);
 
 
-    status = cldenseSnrm1(&norm_x, &x, createResult.control);
+    int N = 1024;
+    cldenseVector *x;
+    x = malloc(commandLineOptions.num*sizeof(cldenseVector));
 
+    for (int i = 0 ; i< commandLineOptions.num; ++i) {
+        clsparseInitVector(x+i);
 
+        (x+i)->values = clCreateBuffer(context, CL_MEM_READ_WRITE, N * sizeof(double),
+                NULL, &cl_status);
+        (x+i)->num_values = N;
 
-    // Read  result
-    float* host_norm_x =
-        clEnqueueMapBuffer(queue, norm_x.value, CL_TRUE, CL_MAP_READ, 0, sizeof(float),
-                0, NULL, NULL, &cl_status);
+        // Fill x buffer with ones;
+        double one = 1.0f;
+        cl_status = clEnqueueFillBuffer(queue, (x+i)->values, &one, sizeof(double),
+                0, N * sizeof(double), 0, NULL, NULL);        
+    }
 
-    printf("Result : %f\n", *host_norm_x);
+    gram_schmidt(x, commandLineOptions.num, &context, createResult.control);
 
-    cl_status = clEnqueueUnmapMemObject(queue, norm_x.value, host_norm_x,
-            0, NULL, NULL);
+    for (int i = 0 ; i< commandLineOptions.num; ++i) {
+        cldenseDnrm2(&norm_x, x+i, createResult.control);
+        // Read  result
+        double* host_norm_x =
+            clEnqueueMapBuffer(queue, norm_x.value, CL_TRUE, CL_MAP_READ, 0, sizeof(double),
+                    0, NULL, NULL, &cl_status);
+
+        printf("Result : %.16f\n", *host_norm_x);
+        cl_status = clEnqueueUnmapMemObject(queue, norm_x.value, host_norm_x,
+                0, NULL, NULL);
+        clReleaseMemObject((x+i)->values);
+    }
 
     
 
     // Free memory
     clReleaseMemObject(norm_x.value);
-    clReleaseMemObject(x.values);
 
     cl_free(platforms, devices, context, queue, createResult);
 

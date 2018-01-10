@@ -78,6 +78,7 @@ add_executable(
 	src/executable_options.c
 	src/matrix_reader.c
 	src/cl_utils.c
+	src/gram_schmidt.c
 	lib/src/mmio.c
 )
 
