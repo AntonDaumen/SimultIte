@@ -48,27 +48,33 @@ int main(
 
     print_mat(&mat);
     cl_print_matrix(&d_mat, queue);
-    printf("%d\n", sizeof(real_t));
 
-    int N = 1024;
     cldenseVector *x;
     x = malloc(commandLineOptions.num*sizeof(cldenseVector));
-
-    for (int i = 0 ; i< commandLineOptions.num; ++i) {
+    real_t * init;
+    srand(SEED);
+    init = malloc(sizeof(real_t)*d_mat.num_rows);
+    
+    for (int i = 0; i< commandLineOptions.num; ++i) {
         clsparseInitVector(x+i);
 
-        (x+i)->values = clCreateBuffer(context, CL_MEM_READ_WRITE, N * sizeof(real_t),
+        (x+i)->values = clCreateBuffer(context, CL_MEM_READ_WRITE, d_mat.num_rows * sizeof(real_t),
                 NULL, &cl_status);
-        (x+i)->num_values = N;
+        (x+i)->num_values = d_mat.num_rows;
 
         // Fill x buffer with ones;
-        real_t one = 1.0f;
-        cl_status = clEnqueueFillBuffer(queue, (x+i)->values, &one, sizeof(real_t),
-                0, N * sizeof(real_t), 0, NULL, NULL);
+        for(int j = 0; j<d_mat.num_rows; ++j) { 
+            init[j]=((real_t) rand())/RAND_MAX;
+        }
+        cl_status = clEnqueueWriteBuffer(queue, (x+i)->values, CL_TRUE, 0, d_mat.num_rows * sizeof(real_t),
+                init, 0, NULL, NULL);
     }
+    free(init);
+    gram_schmidt(x, commandLineOptions.num, &context, createResult.control);
+
 /******* CORE ALGORITHM *******/
-    unsigned nb_iter=NB_ITER;
-    real_t tolerance=1;
+    unsigned nb_iter = NB_ITER;
+    real_t tolerance = 1;
     while(nb_iter-- && tolerance > MAX_TOL) {
 #ifdef DOUBLE_PRECISION
 
