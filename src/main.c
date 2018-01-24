@@ -37,7 +37,7 @@ int main(
     cl_init(&platforms, &devices, &context, &queue, &createResult);
 
     clsparseCsrMatrix d_mat;
-    cl_init_matrix(&mat, &d_mat, context, queue);
+    cl_init_matrix(&mat, &d_mat, context, queue, createResult.control);
 
     /** Allocate GPU buffers **/
     cl_int         cl_status = CL_SUCCESS;
@@ -71,7 +71,7 @@ int main(
     real_t tolerance=1;
     while(nb_iter-- && tolerance > MAX_TOL) {
 #ifdef DOUBLE_PRECISION
-   
+
 #else
 
 #endif
@@ -98,6 +98,7 @@ int main(
 
     // Free memory
     clReleaseMemObject(norm_x.value);
+    cl_free_matrix(&d_mat, createResult.control);
 
     cl_free(platforms, devices, context, queue, createResult);
 

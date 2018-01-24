@@ -44,7 +44,14 @@ void cl_init_matrix(
     csrMatrix*          host_mat,
     clsparseCsrMatrix*  d_mat,
     cl_context          context,
-    cl_command_queue    queue);
+    cl_command_queue    queue,
+    clsparseControl     control);
+
+/** \brief Free the clsparse CSR Matrix
+ */
+void cl_free_matrix(
+        clsparseCsrMatrix*  d_mat,
+        clsparseControl     control);
 
 /** \brief Print the clsparseCsrMatrix
  */

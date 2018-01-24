@@ -133,7 +133,8 @@ void cl_init_matrix(
         csrMatrix*          host_mat,
         clsparseCsrMatrix*  d_mat,
 		cl_context          context,
-		cl_command_queue    queue)
+		cl_command_queue    queue,
+        clsparseControl     control)
 {
 	cl_int cl_status;
 
@@ -150,6 +151,18 @@ void cl_init_matrix(
     clEnqueueWriteBuffer(queue, d_mat->values, CL_TRUE, 0, sizeof(real_t) * host_mat->nNz, host_mat->vals, 0, NULL, NULL);
     clEnqueueWriteBuffer(queue, d_mat->col_indices, CL_TRUE, 0, sizeof(int) * host_mat->nNz, host_mat->cols, 0, NULL, NULL);
     clEnqueueWriteBuffer(queue, d_mat->row_pointer, CL_TRUE, 0, sizeof(int) * (host_mat->nRow + 1), host_mat->rows, 0, NULL, NULL);
+
+    clsparseCsrMetaCreate(d_mat, control);
+}
+
+void cl_free_matrix(
+        clsparseCsrMatrix*  d_mat,
+        clsparseControl     control)
+{
+    clsparseCsrMetaDelete(d_mat, createResult.control);
+    clReleaseMemObject(d_mat.values);
+    clReleaseMemObject(d_mat.col_indices);
+    clReleaseMemObject(d_mat.row_pointer);
 }
 
 void cl_print_matrix(
@@ -158,14 +171,11 @@ void cl_print_matrix(
 {
 	cl_int cl_status;
     real_t* values =
-        clEnqueueMapBuffer(queue, d_mat->values, CL_TRUE, CL_MAP_READ, 0, sizeof(real_t) * d_mat->num_nonzeros,
-                0, NULL, NULL, &cl_status);
+        clEnqueueMapBuffer(queue, d_mat->values, CL_TRUE, CL_MAP_READ, 0, sizeof(real_t) * d_mat->num_nonzeros, 0, NULL, NULL, &cl_status);
     int* column =
-        clEnqueueMapBuffer(queue, d_mat->col_indices, CL_TRUE, CL_MAP_READ, 0, sizeof(int) * d_mat->num_nonzeros,
-                0, NULL, NULL, &cl_status);
+        clEnqueueMapBuffer(queue, d_mat->col_indices, CL_TRUE, CL_MAP_READ, 0, sizeof(int) * d_mat->num_nonzeros, 0, NULL, NULL, &cl_status);
     int* row_pointer =
-        clEnqueueMapBuffer(queue, d_mat->row_pointer, CL_TRUE, CL_MAP_READ, 0, sizeof(int) * (d_mat->num_rows + 1),
-                0, NULL, NULL, &cl_status);
+        clEnqueueMapBuffer(queue, d_mat->row_pointer, CL_TRUE, CL_MAP_READ, 0, sizeof(int) * (d_mat->num_rows + 1), 0, NULL, NULL, &cl_status);
 
     printf("Values: ");
     for(int i=0; i < d_mat->num_nonzeros; ++i)
