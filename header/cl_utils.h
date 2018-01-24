@@ -18,7 +18,7 @@
 /// \brief Vector with one value constant to one
 extern cldenseVector  one_V;
 /// \brief Scalar with constant to minus one
-extern clsparseScalar minusOneS_S;
+extern clsparseScalar minusOne_S;
 
 /** \brief Initialize the OpenCL structures to use with the first available GPU
  */
@@ -44,5 +44,11 @@ void cl_init_matrix(
     csrMatrix*          host_mat,
     clsparseCsrMatrix*  d_mat,
     cl_context          context,
+    cl_command_queue    queue);
+
+/** \brief Print the clsparseCsrMatrix
+ */
+void cl_print_matrix(
+    clsparseCsrMatrix*  d_mat,
     cl_command_queue    queue);
 #endif
