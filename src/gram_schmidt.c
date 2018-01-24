@@ -19,12 +19,25 @@ void gram_schmidt(
 
 	clsparseScalar norm;
 	clsparseInitScalar(&norm);
-	norm.value = clCreateBuffer(*context, CL_MEM_READ_WRITE, sizeof(float),
+	norm.value = clCreateBuffer(*context, CL_MEM_READ_WRITE, sizeof(real_t),
             NULL, &cl_status);
 
 	for (int i = 0; i<numberOfVectors; ++i)
 	{
-		cldenseSscale(&eigenVectors[i], &minusOneS_S, &eigenVectors[i], control);
+#ifdef DOUBLE_PRECISION
+        cldenseDscale(&eigenVectors[i], &minusOneS_S, &eigenVectors[i], control);
+		for(int j = 0; j<i; ++j)
+		{
+			cldenseDdot(&norm, &eigenVectors[j], &eigenVectors[i], control);
+			cldenseDaxpy(&eigenVectors[i], &norm, &eigenVectors[j], &eigenVectors[i], control);
+
+		}
+		cldenseDscale(&eigenVectors[i], &minusOneS_S, &eigenVectors[i], control);
+		cldenseDnrm2(&norm, &eigenVectors[i], control);
+		clsparseScalarDinv(&norm, control);
+		cldenseDscale(&eigenVectors[i], &norm, &eigenVectors[i], control);
+#else
+        cldenseSscale(&eigenVectors[i], &minusOneS_S, &eigenVectors[i], control);
 		for(int j = 0; j<i; ++j)
 		{
 			cldenseSdot(&norm, &eigenVectors[j], &eigenVectors[i], control);
@@ -35,7 +48,8 @@ void gram_schmidt(
 		cldenseSnrm2(&norm, &eigenVectors[i], control);
 		clsparseScalarSinv(&norm, control);
 		cldenseSscale(&eigenVectors[i], &norm, &eigenVectors[i], control);
-	}
+#endif
+    }
 
 	clReleaseMemObject(norm.value);
 }
@@ -49,5 +63,18 @@ clsparseStatus clsparseScalarSinv(
 	vector.values = scalar->value;
 	vector.off_values = scalar->off_value;
 
-	return cldenseSdiv(&vector, &oneS_V, &vector, control);
+	return cldenseSdiv(&vector, &one_V, &vector, control);
+}
+
+
+clsparseStatus clsparseScalarDinv(
+		clsparseScalar *scalar,
+		clsparseControl control)
+{
+	cldenseVector  vector;
+	vector.num_values = 1u;
+	vector.values = scalar->value;
+	vector.off_values = scalar->off_value;
+
+	return cldenseDdiv(&vector, &one_V, &vector, control);
 }

@@ -16,7 +16,7 @@
 #include "define.h"
 
 /// \brief Vector with one value constant to one
-extern cldenseVector  oneS_V;
+extern cldenseVector  one_V;
 /// \brief Scalar with constant to minus one
 extern clsparseScalar minusOneS_S;
 

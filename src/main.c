@@ -22,6 +22,7 @@ int main(
         char *argv[],
         char *env[])
 {
+    printf("%d %d %d\n", sizeof(float), sizeof(double), sizeof(real_t));
     parse_argument(argc, argv, env);
 
     csrMatrix mat;
@@ -43,7 +44,7 @@ int main(
     cl_int         cl_status = CL_SUCCESS;
     clsparseScalar norm_x;
     clsparseInitScalar(&norm_x);
-    norm_x.value = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float),
+    norm_x.value = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(real_t),
                 NULL, &cl_status);
 
     real_t* values =
@@ -83,22 +84,23 @@ int main(
     for (int i = 0 ; i< commandLineOptions.num; ++i) {
         clsparseInitVector(x+i);
 
-        (x+i)->values = clCreateBuffer(context, CL_MEM_READ_WRITE, N * sizeof(float),
+        (x+i)->values = clCreateBuffer(context, CL_MEM_READ_WRITE, N * sizeof(real_t),
                 NULL, &cl_status);
         (x+i)->num_values = N;
 
         // Fill x buffer with ones;
-        float one = 1.0f;
-        cl_status = clEnqueueFillBuffer(queue, (x+i)->values, &one, sizeof(float),
-                0, N * sizeof(float), 0, NULL, NULL);
+        real_t one = 1.0f;
+        cl_status = clEnqueueFillBuffer(queue, (x+i)->values, &one, sizeof(real_t),
+                0, N * sizeof(real_t), 0, NULL, NULL);
     }
+
     gram_schmidt(x, commandLineOptions.num, &context, createResult.control);
 
     for (int i = 0 ; i< commandLineOptions.num; ++i) {
         cldenseSnrm2(&norm_x, x+i, createResult.control);
         // Read  result
-        float* host_norm_x =
-            clEnqueueMapBuffer(queue, norm_x.value, CL_TRUE, CL_MAP_READ, 0, sizeof(float),
+        real_t* host_norm_x =
+            clEnqueueMapBuffer(queue, norm_x.value, CL_TRUE, CL_MAP_READ, 0, sizeof(real_t),
                     0, NULL, NULL, &cl_status);
 
         printf("Result : %.16f\n", *host_norm_x);

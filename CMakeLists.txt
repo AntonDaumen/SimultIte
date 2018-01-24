@@ -8,6 +8,14 @@ set(VERSION_MAJOR 0)
 set(VERSION_MINOR 0)
 set(VERSION_PATCH 0)
 
+
+OPTION(DOUBLE_PRECISION "Enable Double Precision (Warning: check first that your system supports it)" OFF) # Enabled by default
+OPTION(COMPILE_CLSPARSE "Set whether to recompile clSPARSE" ON)
+
+IF(DOUBLE_PRECISION)
+    ADD_DEFINITIONS(-DDOUBLE_PRECISION)
+ENDIF(DOUBLE_PRECISION)
+
 set(doxy_main_page ${CMAKE_SOURCE_DIR}/README.md)
 
 # Generate documentation
@@ -51,12 +59,12 @@ else(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE)
     message(STATUS "clSPARSE source files found")
 endif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE)
 
-
-message(STATUS "Compiling clSPARSE")
-execute_process(COMMAND cmake ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE -B${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/)
-execute_process(COMMAND make 
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/)
-
+if (COMPILE_CLSPARSE)
+    message(STATUS "Compiling clSPARSE")
+    execute_process(COMMAND cmake ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE -B${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/)
+    execute_process(COMMAND make 
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/)
+endif()
 
 set(clSPARSE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/src/include/ ${CMAKE_CURRENT_SOURCE_DIR}/lib/clSPARSE/build/clSPARSE-build/library/)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/bin)

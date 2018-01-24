@@ -26,4 +26,8 @@ clsparseStatus clsparseScalarSinv(
 	clsparseScalar  *scalar,
 	clsparseControl control);
 
+clsparseStatus clsparseScalarDinv(
+	clsparseScalar  *scalar,
+	clsparseControl control);
+
 #endif

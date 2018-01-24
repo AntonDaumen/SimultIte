@@ -7,7 +7,7 @@
 
 #include "cl_utils.h"
 
-cldenseVector  oneS_V;
+cldenseVector  one_V;
 clsparseScalar minusOneS_S;
 
 void cl_init(
@@ -72,19 +72,19 @@ void cl_init(
     *queue = clCreateCommandQueue(*context, *devices[0], 0, NULL);
 
     // Initialize oneD_V and minusOneD_S constant
-    clsparseInitVector(&oneS_V);
-    oneS_V.values = clCreateBuffer(*context, CL_MEM_READ_ONLY, sizeof(float),
+    clsparseInitVector(&one_V);
+    one_V.values = clCreateBuffer(*context, CL_MEM_READ_ONLY, sizeof(real_t),
             NULL, &cl_status);
-    oneS_V.num_values = 1;
-    float oneFloat = 1.0f;
-    cl_status = clEnqueueFillBuffer(*queue, oneS_V.values, &oneFloat, sizeof(float),
-            0, sizeof(float), 0, NULL, NULL);
+    one_V.num_values = 1;
+    real_t oneFloat = 1.0f;
+    cl_status = clEnqueueFillBuffer(*queue, one_V.values, &oneFloat, sizeof(real_t),
+            0, sizeof(real_t), 0, NULL, NULL);
     clsparseInitScalar(&minusOneS_S);
-    minusOneS_S.value = clCreateBuffer(*context, CL_MEM_READ_ONLY, sizeof(float),
+    minusOneS_S.value = clCreateBuffer(*context, CL_MEM_READ_ONLY, sizeof(real_t),
             NULL, &cl_status);
     oneFloat = -1.0f;
-    cl_status = clEnqueueFillBuffer(*queue, minusOneS_S.value, &oneFloat, sizeof(float),
-            0, sizeof(float), 0, NULL, NULL);
+    cl_status = clEnqueueFillBuffer(*queue, minusOneS_S.value, &oneFloat, sizeof(real_t),
+            0, sizeof(real_t), 0, NULL, NULL);
 
     clsparseStatus status = clsparseSetup();
     if (status != clsparseSuccess)
@@ -118,7 +118,7 @@ void cl_free(
     }
 
     // Free OpenCL resources
-    clReleaseMemObject(oneS_V.values);
+    clReleaseMemObject(one_V.values);
     clReleaseMemObject(minusOneS_S.value);
     clReleaseCommandQueue(queue);
     clReleaseContext(context);
