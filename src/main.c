@@ -94,8 +94,23 @@ int main(
                 0, N * sizeof(real_t), 0, NULL, NULL);
     }
 
-    gram_schmidt(x, commandLineOptions.num, &context, createResult.control);
+/******* CORE ALGORITHM *******/
+    unsigned nb_iter=NB_ITER;
+    real_t tolerance=1;
+    while(nb_iter-- && tolerance > MAX_TOL) {
+#ifdef DOUBLE_PRECISION
+   
+#else
 
+#endif
+    gram_schmidt(x, commandLineOptions.num, &context, createResult.control);
+#ifdef DOUBLE_PRECISION
+
+#else
+
+#endif
+    }
+/******* GET THE DATA *******/
     for (int i = 0 ; i< commandLineOptions.num; ++i) {
         cldenseSnrm2(&norm_x, x+i, createResult.control);
         // Read  result

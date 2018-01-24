@@ -1,14 +1,20 @@
 /**
  * \author Daumen Anton and Nicolas Derumigny
- * \file matrix_reader.h
- * \brief Definition of functions that reads the matrix.
+ * \file define.h
+ * \brief Defines the constant values used by the program and whether to use floats or doubles.
  *
  */
 
 #ifndef _DEFINE_H_
 #define _DEFINE_H_
 
-//#define DOUBLE_PRECISION
+#ifndef NB_ITER
+#define NB_ITER 500
+#endif
+#ifndef MAX_TOL
+#define MAX_TOL 1e-8
+#endif
+
 #ifdef DOUBLE_PRECISION
 typedef double real_t;
 #else
