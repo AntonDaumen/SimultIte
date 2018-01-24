@@ -21,6 +21,8 @@ typedef double real_t;
 typedef float real_t;
 #endif
 
+#define SEED 1
+
 typedef struct csrMatrix{
     int*    rows;
     int*    cols;
