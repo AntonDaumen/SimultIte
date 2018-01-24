@@ -8,7 +8,7 @@
 #include "cl_utils.h"
 
 cldenseVector  one_V;
-clsparseScalar minusOneS_S;
+clsparseScalar minusOne_S;
 
 void cl_init(
 		cl_platform_id       **platforms,
@@ -71,19 +71,21 @@ void cl_init(
     *context = clCreateContext(NULL, 1, *devices, NULL, NULL, NULL);
     *queue = clCreateCommandQueue(*context, *devices[0], 0, NULL);
 
-    // Initialize oneD_V and minusOneD_S constant
+    // Initialize one_V and minusOne_S constant
+
     clsparseInitVector(&one_V);
     one_V.values = clCreateBuffer(*context, CL_MEM_READ_ONLY, sizeof(real_t),
             NULL, &cl_status);
     one_V.num_values = 1;
     real_t oneFloat = 1.0f;
     cl_status = clEnqueueFillBuffer(*queue, one_V.values, &oneFloat, sizeof(real_t),
+
             0, sizeof(real_t), 0, NULL, NULL);
-    clsparseInitScalar(&minusOneS_S);
-    minusOneS_S.value = clCreateBuffer(*context, CL_MEM_READ_ONLY, sizeof(real_t),
+    clsparseInitScalar(&minusOne_S);
+    minusOne_S.value = clCreateBuffer(*context, CL_MEM_READ_ONLY, sizeof(real_t),
             NULL, &cl_status);
     oneFloat = -1.0f;
-    cl_status = clEnqueueFillBuffer(*queue, minusOneS_S.value, &oneFloat, sizeof(real_t),
+    cl_status = clEnqueueFillBuffer(*queue, minusOne_S.value, &oneFloat, sizeof(real_t),
             0, sizeof(real_t), 0, NULL, NULL);
 
     clsparseStatus status = clsparseSetup();
@@ -119,7 +121,7 @@ void cl_free(
 
     // Free OpenCL resources
     clReleaseMemObject(one_V.values);
-    clReleaseMemObject(minusOneS_S.value);
+    clReleaseMemObject(minusOne_S.value);
     clReleaseCommandQueue(queue);
     clReleaseContext(context);
 
@@ -148,4 +150,39 @@ void cl_init_matrix(
     clEnqueueWriteBuffer(queue, d_mat->values, CL_TRUE, 0, sizeof(real_t) * host_mat->nNz, host_mat->vals, 0, NULL, NULL);
     clEnqueueWriteBuffer(queue, d_mat->col_indices, CL_TRUE, 0, sizeof(int) * host_mat->nNz, host_mat->cols, 0, NULL, NULL);
     clEnqueueWriteBuffer(queue, d_mat->row_pointer, CL_TRUE, 0, sizeof(int) * (host_mat->nRow + 1), host_mat->rows, 0, NULL, NULL);
+}
+
+void cl_print_matrix(
+        clsparseCsrMatrix*  d_mat,
+        cl_command_queue    queue)
+{
+	cl_int cl_status;
+    real_t* values =
+        clEnqueueMapBuffer(queue, d_mat->values, CL_TRUE, CL_MAP_READ, 0, sizeof(real_t) * d_mat->num_nonzeros,
+                0, NULL, NULL, &cl_status);
+    int* column =
+        clEnqueueMapBuffer(queue, d_mat->col_indices, CL_TRUE, CL_MAP_READ, 0, sizeof(int) * d_mat->num_nonzeros,
+                0, NULL, NULL, &cl_status);
+    int* row_pointer =
+        clEnqueueMapBuffer(queue, d_mat->row_pointer, CL_TRUE, CL_MAP_READ, 0, sizeof(int) * (d_mat->num_rows + 1),
+                0, NULL, NULL, &cl_status);
+
+    printf("Values: ");
+    for(int i=0; i < d_mat->num_nonzeros; ++i)
+    {
+        printf("%f ", values[i]);
+    }
+    printf("\n");
+    printf("Columns: ");
+    for(int i=0; i < d_mat->num_nonzeros; ++i)
+    {
+        printf("%d ", column[i]);
+    }
+    printf("\n");
+    printf("Rows : ");
+    for(int i=0; i < d_mat->num_rows + 1; ++i)
+    {
+        printf("%d ", row_pointer[i]);
+    }
+    printf("\n");
 }

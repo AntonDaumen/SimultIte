@@ -45,5 +45,9 @@ int get_line(
     /// Array where the value will be stored
     real_t* val);
 
-
+/**
+ * \brief Print a csrMatrix struct
+ */
+void print_mat(
+    csrMatrix* mat);
 #endif

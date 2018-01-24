@@ -73,24 +73,6 @@ int read_Matrix(
         mat->rows[i] += mat->rows[i-1];
     }
 
-    printf("Values: ");
-    for(int i=0; i < mat->nNz; ++i)
-    {
-        printf("%f ", mat->vals[i]);
-    }
-    printf("\n");
-    printf("Columns: ");
-    for(int i=0; i < mat->nNz; ++i)
-    {
-        printf("%d ", mat->cols[i]);
-    }
-    printf("\n");
-    printf("Rows: ");
-    for(int i=0; i < mat->nRow + 1; ++i)
-    {
-        printf("%d ", mat->rows[i]);
-    }
-    printf("\n");
 
     return EXIT_SUCCESS;
 }
@@ -137,4 +119,27 @@ int get_line(
     rows[row]++;
 
     return EXIT_SUCCESS;
+}
+
+void print_mat(
+        csrMatrix* mat)
+{
+    printf("Values: ");
+    for(int i=0; i < mat->nNz; ++i)
+    {
+        printf("%f ", mat->vals[i]);
+    }
+    printf("\n");
+    printf("Columns: ");
+    for(int i=0; i < mat->nNz; ++i)
+    {
+        printf("%d ", mat->cols[i]);
+    }
+    printf("\n");
+    printf("Rows: ");
+    for(int i=0; i < mat->nRow + 1; ++i)
+    {
+        printf("%d ", mat->rows[i]);
+    }
+    printf("\n");
 }

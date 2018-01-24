@@ -22,7 +22,6 @@ int main(
         char *argv[],
         char *env[])
 {
-    printf("%d %d %d\n", sizeof(float), sizeof(double), sizeof(real_t));
     parse_argument(argc, argv, env);
 
     csrMatrix mat;
@@ -47,34 +46,8 @@ int main(
     norm_x.value = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(real_t),
                 NULL, &cl_status);
 
-    real_t* values =
-        clEnqueueMapBuffer(queue, d_mat.values, CL_TRUE, CL_MAP_READ, 0, sizeof(real_t) * d_mat.num_nonzeros,
-                0, NULL, NULL, &cl_status);
-    int* column =
-        clEnqueueMapBuffer(queue, d_mat.col_indices, CL_TRUE, CL_MAP_READ, 0, sizeof(int) * d_mat.num_nonzeros,
-                0, NULL, NULL, &cl_status);
-    int* row_pointer =
-        clEnqueueMapBuffer(queue, d_mat.row_pointer, CL_TRUE, CL_MAP_READ, 0, sizeof(int) * (d_mat.num_rows + 1),
-                0, NULL, NULL, &cl_status);
-    printf("Values: ");
-    for(int i=0; i < mat.nNz; ++i)
-    {
-        printf("%f ", values[i]);
-    }
-    printf("\n");
-    printf("Columns: ");
-    for(int i=0; i < mat.nNz; ++i)
-    {
-        printf("%d ", column[i]);
-    }
-    printf("\n");
-    printf("Rows: ");
-    for(int i=0; i < mat.nRow + 1; ++i)
-    {
-        printf("%d ", row_pointer[i]);
-    }
-    printf("\n");
-
+    print_mat(&mat);
+    cl_print_matrix(&d_mat, queue);
     printf("%d\n", sizeof(real_t));
 
     int N = 1024;
@@ -93,7 +66,6 @@ int main(
         cl_status = clEnqueueFillBuffer(queue, (x+i)->values, &one, sizeof(real_t),
                 0, N * sizeof(real_t), 0, NULL, NULL);
     }
-
 /******* CORE ALGORITHM *******/
     unsigned nb_iter=NB_ITER;
     real_t tolerance=1;
