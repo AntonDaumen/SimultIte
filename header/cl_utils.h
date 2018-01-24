@@ -1,4 +1,4 @@
-/** 
+/**
  * \author Daumen Anton and Nicolas Derumigny
  * \file cl_utils.h
  * \brief Set of tools to simplify clSPARSE usage
@@ -13,6 +13,7 @@
 
 #include "clSPARSE.h"
 #include "clSPARSE-error.h"
+#include "define.h"
 
 /// \brief Vector with one value constant to one
 extern cldenseVector  oneS_V;
@@ -37,4 +38,11 @@ void cl_free(
 	cl_command_queue     queue,
     clsparseCreateResult createResult);
 
+/** \brief Initialize a clsparse CSR Matrix from a CSR matrix on host
+ */
+void cl_init_matrix(
+    csrMatrix*          host_mat,
+    clsparseCsrMatrix*  d_mat,
+    cl_context          context,
+    cl_command_queue    queue);
 #endif

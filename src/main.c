@@ -24,6 +24,10 @@ int main(
 {
     parse_argument(argc, argv, env);
 
+    csrMatrix mat;
+    read_Matrix(commandLineOptions.infilePath, &mat);
+
+
     cl_platform_id       *platforms;
     cl_device_id         *devices;
     cl_context           context;
@@ -32,6 +36,9 @@ int main(
 
     cl_init(&platforms, &devices, &context, &queue, &createResult);
 
+    clsparseCsrMatrix d_mat;
+    cl_init_matrix(&mat, &d_mat, context, queue);
+
     /** Allocate GPU buffers **/
     cl_int         cl_status = CL_SUCCESS;
     clsparseScalar norm_x;
@@ -39,6 +46,35 @@ int main(
     norm_x.value = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float),
                 NULL, &cl_status);
 
+    real_t* values =
+        clEnqueueMapBuffer(queue, d_mat.values, CL_TRUE, CL_MAP_READ, 0, sizeof(real_t) * d_mat.num_nonzeros,
+                0, NULL, NULL, &cl_status);
+    int* column =
+        clEnqueueMapBuffer(queue, d_mat.col_indices, CL_TRUE, CL_MAP_READ, 0, sizeof(int) * d_mat.num_nonzeros,
+                0, NULL, NULL, &cl_status);
+    int* row_pointer =
+        clEnqueueMapBuffer(queue, d_mat.row_pointer, CL_TRUE, CL_MAP_READ, 0, sizeof(int) * (d_mat.num_rows + 1),
+                0, NULL, NULL, &cl_status);
+    printf("Values: ");
+    for(int i=0; i < mat.nNz; ++i)
+    {
+        printf("%f ", values[i]);
+    }
+    printf("\n");
+    printf("Columns: ");
+    for(int i=0; i < mat.nNz; ++i)
+    {
+        printf("%d ", column[i]);
+    }
+    printf("\n");
+    printf("Rows: ");
+    for(int i=0; i < mat.nRow + 1; ++i)
+    {
+        printf("%d ", row_pointer[i]);
+    }
+    printf("\n");
+
+    printf("%d\n", sizeof(real_t));
 
     int N = 1024;
     cldenseVector *x;
@@ -54,7 +90,7 @@ int main(
         // Fill x buffer with ones;
         float one = 1.0f;
         cl_status = clEnqueueFillBuffer(queue, (x+i)->values, &one, sizeof(float),
-                0, N * sizeof(float), 0, NULL, NULL);        
+                0, N * sizeof(float), 0, NULL, NULL);
     }
     gram_schmidt(x, commandLineOptions.num, &context, createResult.control);
 
@@ -70,8 +106,6 @@ int main(
                 0, NULL, NULL);
         clReleaseMemObject((x+i)->values);
     }
-
-    
 
     // Free memory
     clReleaseMemObject(norm_x.value);

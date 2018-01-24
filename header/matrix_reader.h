@@ -10,6 +10,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "clSPARSE.h"
+#include "clSPARSE-error.h"
+#include "define.h"
 #include "../lib/header/mmio.h"
 
 /**
@@ -17,7 +22,9 @@
  */
 int read_Matrix(
     /// Name of the file to open
-    const char* filename);
+    const char* filename,
+    ///Sparse Matrix in the CSR format
+    csrMatrix*  mat);
 
 /**
  * \brief Read the values of a Matrix Market file line.
@@ -36,7 +43,7 @@ int get_line(
     /// Array where the column indices will be stored
     int* col,
     /// Array where the value will be stored
-    double* val);
+    real_t* val);
 
 
 #endif

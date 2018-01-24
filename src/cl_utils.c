@@ -1,4 +1,4 @@
-/** 
+/**
  * \author Daumen Anton and Nicolas Derumigny
  * \file cl_utils.c
  * \brief Set of tools to simplify clSPARSE usage
@@ -69,7 +69,7 @@ void cl_init(
 
     // Get context and queue
     *context = clCreateContext(NULL, 1, *devices, NULL, NULL, NULL);
-    *queue = clCreateCommandQueueWithProperties(*context, *devices[0], NULL, NULL);
+    *queue = clCreateCommandQueue(*context, *devices[0], 0, NULL);
 
     // Initialize oneD_V and minusOneD_S constant
     clsparseInitVector(&oneS_V);
@@ -125,4 +125,27 @@ void cl_free(
 
     free(devices);
     free(platforms);
+}
+
+void cl_init_matrix(
+        csrMatrix*          host_mat,
+        clsparseCsrMatrix*  d_mat,
+		cl_context          context,
+		cl_command_queue    queue)
+{
+	cl_int cl_status;
+
+    clsparseInitCsrMatrix(d_mat);
+
+    d_mat->num_nonzeros = host_mat->nNz;
+    d_mat->num_rows = host_mat->nRow;
+    d_mat->num_cols = host_mat->nCol;
+
+    d_mat->values = clCreateBuffer(context, CL_MEM_READ_ONLY, d_mat->num_nonzeros * sizeof(real_t), NULL, &cl_status);
+    d_mat->col_indices = clCreateBuffer(context, CL_MEM_READ_ONLY, d_mat->num_nonzeros * sizeof(clsparseIdx_t), NULL, &cl_status);
+    d_mat->row_pointer = clCreateBuffer(context, CL_MEM_READ_ONLY, (d_mat->num_rows + 1) * sizeof(clsparseIdx_t), NULL, &cl_status);
+
+    clEnqueueWriteBuffer(queue, d_mat->values, CL_TRUE, 0, sizeof(real_t) * host_mat->nNz, host_mat->vals, 0, NULL, NULL);
+    clEnqueueWriteBuffer(queue, d_mat->col_indices, CL_TRUE, 0, sizeof(int) * host_mat->nNz, host_mat->cols, 0, NULL, NULL);
+    clEnqueueWriteBuffer(queue, d_mat->row_pointer, CL_TRUE, 0, sizeof(int) * (host_mat->nRow + 1), host_mat->rows, 0, NULL, NULL);
 }
