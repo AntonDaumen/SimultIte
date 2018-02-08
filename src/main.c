@@ -165,6 +165,7 @@ int main(
     }
 
 /******* GET THE DATA *******/
+    real_t error;
     for (int i = 0 ; i< commandLineOptions.num+1; ++i)
     {
         cldenseSnrm2(&norm_x, x+i, createResult.control);
@@ -188,9 +189,9 @@ int main(
         array_min=malloc(num_proc*sizeof(int));
     }
 #ifdef DOUBLE_PRECISION
-    MPI_Gather(&error, 1, MPI_DOUBLE, errors, num_proc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gather(&error, 1, MPI_DOUBLE, errors, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #else
-    MPI_Gather(&error, 1, MPI_FLOAT, errors, num_proc, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&error, 1, MPI_FLOAT, errors, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
 #endif
 
     if (my_rank == 0) {
@@ -211,7 +212,7 @@ int main(
         }
     }
     int is_min;
-    MPI_Scatter(array_min, num_proc, MPI_INT, &is_min, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(array_min, 1, MPI_INT, &is_min, 1, MPI_INT, 0, MPI_COMM_WORLD);
     if(is_min) {
         //TODO print eigenvalues here
     }
