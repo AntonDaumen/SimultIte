@@ -156,13 +156,12 @@ void cl_init_matrix(
 }
 
 void cl_free_matrix(
-        clsparseCsrMatrix*  d_mat,
-        clsparseControl     control)
+        clsparseCsrMatrix*  d_mat)
 {
-    clsparseCsrMetaDelete(d_mat, createResult.control);
-    clReleaseMemObject(d_mat.values);
-    clReleaseMemObject(d_mat.col_indices);
-    clReleaseMemObject(d_mat.row_pointer);
+    clsparseCsrMetaDelete(d_mat);
+    clReleaseMemObject(d_mat->values);
+    clReleaseMemObject(d_mat->col_indices);
+    clReleaseMemObject(d_mat->row_pointer);
 }
 
 void cl_print_matrix(

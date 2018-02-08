@@ -50,8 +50,7 @@ void cl_init_matrix(
 /** \brief Free the clsparse CSR Matrix
  */
 void cl_free_matrix(
-        clsparseCsrMatrix*  d_mat,
-        clsparseControl     control);
+        clsparseCsrMatrix*  d_mat);
 
 /** \brief Print the clsparseCsrMatrix
  */

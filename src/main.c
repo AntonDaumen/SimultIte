@@ -104,7 +104,7 @@ int main(
 
     // Free memory
     clReleaseMemObject(norm_x.value);
-    cl_free_matrix(&d_mat, createResult.control);
+    cl_free_matrix(&d_mat);
 
     cl_free(platforms, devices, context, queue, createResult);
 
