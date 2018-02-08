@@ -9,7 +9,7 @@ set(VERSION_MINOR 0)
 set(VERSION_PATCH 0)
 
 
-OPTION(DOUBLE_PRECISION "Enable Double Precision (Warning: check first that your system supports it)" OFF) # Enabled by default
+OPTION(DOUBLE_PRECISION "Enable Double Precision (Warning: check first that your system supports it)" OFF)
 OPTION(COMPILE_CLSPARSE "Set whether to recompile clSPARSE" ON)
 
 IF(DOUBLE_PRECISION)

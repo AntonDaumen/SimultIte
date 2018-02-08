@@ -34,10 +34,7 @@ int main(
     err = read_Matrix(commandLineOptions.infilePath, &mat);
     if(err == EXIT_FAILURE)
     {
-        if (my_rank == 0)
-        {
-            fprintf(stderr,"[ERROR]: Error while reading matrix\n");
-        }
+        if (my_rank == 0) fprintf(stderr,"[ERROR]: Error while reading matrix\n");
         MPI_Finalize();
         return(EXIT_FAILURE);
     }
@@ -104,20 +101,59 @@ int main(
 #endif
     }
 /******* GET THE DATA *******/
+    real_t error;
     for (int i = 0 ; i< commandLineOptions.num; ++i) {
         cldenseSnrm2(&norm_x, x+i, createResult.control);
         // Read  result
-        real_t* host_norm_x =
+        real_t *host_norm =
             clEnqueueMapBuffer(queue, norm_x.value, CL_TRUE, CL_MAP_READ, 0, sizeof(real_t),
                     0, NULL, NULL, &cl_status);
 
-        printf("Result : %.16f\n", *host_norm_x);
-        cl_status = clEnqueueUnmapMemObject(queue, norm_x.value, host_norm_x,
+        printf("Result : %.16f\n", *host_norm);
+        cl_status = clEnqueueUnmapMemObject(queue, norm_x.value, host_norm,
                 0, NULL, NULL);
         clReleaseMemObject((x+i)->values);
     }
 
+    // Assuming the error is in error
+    real_t *errors;
+    int    *array_min;
+    if(my_rank == 0)
+    {
+        errors=malloc(num_proc*sizeof(real_t));
+        array_min=malloc(num_proc*sizeof(int));
+    }
+#ifdef DOUBLE_PRECISION
+    MPI_Gather(&error, 1, MPI_DOUBLE, errors, num_proc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#else
+    MPI_Gather(&error, 1, MPI_FLOAT, errors, num_proc, MPI_FLOAT, 0, MPI_COMM_WORLD);
+#endif
+
+    if (my_rank == 0) {
+        // compute the min
+        real_t min = *errors;
+        int min_index=0;
+        array_min[0]=1;
+        for (int i=1; i<num_proc; ++i)
+        {
+            array_min[i]=0;
+            if (min<errors[i])
+            {
+                min = errors[i];
+                array_min[min_index]=0;
+                array_min[i]=1;
+                min_index = i;
+            }
+        }
+    }
+    int is_min;
+    MPI_Scatter(array_min, num_proc, MPI_INT, &is_min, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if(is_min) {
+        //TODO print eigenvalues here
+    }
+
     // Free memory
+    if(my_rank == 0) free(errors);
     clReleaseMemObject(norm_x.value);
     cl_free_matrix(&d_mat);
 
