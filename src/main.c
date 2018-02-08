@@ -114,8 +114,8 @@ int main(
     unsigned nb_iter = NB_ITER;
     real_t tolerance = 1;
 
-    while(nb_iter-- && tolerance > MAX_TOL)
-    {
+/**** Arnoli Projection *****/
+    //TODO : keep H as a matrix
 #ifdef DOUBLE_PRECISION
         cldenseDnrm1(&norm_x, &randVect, createResult.control);
         clsparseScalarDinv(&norm_x, createResult.control);
@@ -124,7 +124,7 @@ int main(
 
         for(int k=1; k<commandLineOptions.num; ++k)
         {
-            clsparseDcsrmv(&one_S, &d_mat, x+k, &zero_S, &w, createResult.control);
+            clsparseDcsrmv(&one_S, &d_mat, x+k-1, &zero_S, &w, createResult.control);
             cldenseDscale(&w, &minusOne_S, &w, createResult.control);
             for (int j=1; j<k; ++j)
             {
@@ -159,30 +159,26 @@ int main(
             cldenseSscale(x+k+1, &h, &w, createResult.control);
         }
 #endif
+
+    while(nb_iter-- && tolerance > MAX_TOL)
+    {
+        /***** Simultaneous Iteration Method on the matrix H computed with the Arnoldi factorization*****/
         gram_schmidt(x, commandLineOptions.num, &context, createResult.control);
-#ifdef DOUBLE_PRECISION
-
-#else
-
-#endif
     }
+
+// Recover the eigenvectors in the big space by computing u_i = Q_m y_i with y_i the eigenvectors of the Simultaneous Iteration Method, belonging to the Krylov subspace
+#ifdef DOUBLE_PRECISION
+#else
+#endif
 
 /******* GET THE DATA *******/
     real_t error;
     for (int i = 0 ; i< commandLineOptions.num+1; ++i)
     {
-        cldenseSnrm2(&norm_x, x+i, createResult.control);
-        // Read result
-        real_t *host_norm =
-            clEnqueueMapBuffer(queue, norm_x.value, CL_TRUE, CL_MAP_READ, 0, sizeof(real_t),
-                    0, NULL, NULL, &cl_status);
-
-        if (my_rank==0) printf("Result : %.16f\n", *host_norm);
-        cl_status = clEnqueueUnmapMemObject(queue, norm_x.value, host_norm,
-                0, NULL, NULL);
-        clReleaseMemObject((x+i)->values);
+        //TODO : error = sum norm( (A - lambda_i . Id) u_i) )
     }
 
+/****** Sharing the results *****/
     // Assuming the error is in error
     real_t *errors;
     int    *array_min;
