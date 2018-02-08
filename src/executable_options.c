@@ -15,6 +15,7 @@ void parse_argument(
 		char  *env[])
 {
 	int ret =  EXIT_FAILURE;
+	int my_rank; MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
 	commandLineOptions.sizePath = 0;
 	commandLineOptions.num = 0;
@@ -53,7 +54,8 @@ void parse_argument(
 
 			default:
 			help:
-			fprintf(stderr, "Usage: %s {-i | --infile} infile {-n | --num} number_of_eigenvalues [-h]\n", argv[0]);
+			if (my_rank == 0)
+				fprintf(stderr, "Usage: mpirun -n num_process %s {-i | --infile} infile {-n | --num} number_of_eigenvalues [-h]\n", argv[0]);
 			exit(ret);
 			break;
 		}

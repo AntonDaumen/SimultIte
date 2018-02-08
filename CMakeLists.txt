@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.5)
 
 # Name of project
 project (SimultIte)
-set(VERSION_MAJOR 0)
+set(VERSION_MAJOR 1)
 set(VERSION_MINOR 0)
 set(VERSION_PATCH 0)
 
@@ -77,6 +77,7 @@ include_directories(
     lib/header
     ${OpenCL_INCLUDE_DIRS}
     ${clSPARSE_INCLUDE_DIRS}
+    ${MPI_C_INCLUDE_PATH}
 )
 
 # Declaration of executables
@@ -94,6 +95,6 @@ add_executable(
 target_link_libraries(
 	SimultIte
     ${OpenCL_LIBRARIES}
-    ${MPI_LIBRARIES}
+    ${MPI_C_LIBRARIES}
     ${clSPARSE_LIBRARIES}
 )

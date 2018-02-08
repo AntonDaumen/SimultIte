@@ -14,6 +14,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <mpi.h>
 
 /// \brief Structure of command line options for the executable
 struct CommandLineOptions_t

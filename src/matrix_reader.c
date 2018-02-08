@@ -7,7 +7,6 @@
 
 #include "matrix_reader.h"
 
-//TODO: define matrix struct and get result in it
 int read_Matrix(
         const char* filename,
         csrMatrix* mat)
@@ -15,26 +14,26 @@ int read_Matrix(
     MM_typecode matcode;
     FILE *f;
     int nNz, nCol, nRow;
-
+    int my_rank; MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
     // Opening File
     if ((f = fopen(filename, "r")) == NULL)
     {
-        fprintf(stderr, "[ERROR]: matrix_reader.c: FILE NOT FOUND\n");
+        if(my_rank==0) fprintf(stderr, "[ERROR]: matrix_reader.c: FILE NOT FOUND\n");
         return(EXIT_FAILURE);
     }
 
     // Processing Matrix Market banner
     if (mm_read_banner(f, &matcode) != 0)
     {
-        fprintf(stderr, "[ERROR]: matrix_reader.c: Could not process Matrix Market banner.\n");
+        if(my_rank==0) fprintf(stderr, "[ERROR]: matrix_reader.c: Could not process Matrix Market banner.\n");
         return(EXIT_FAILURE);
     }
 
     // Getting dimension of matrix
     if (mm_read_mtx_crd_size(f, &(mat->nRow), &(mat->nCol), &(mat->nNz)) != 0)
     {
-        fprintf(stderr, "[ERROR]: matrix_reader.c: Could not process Matrix size\n");
+        if(my_rank==0) fprintf(stderr, "[ERROR]: matrix_reader.c: Could not process Matrix size\n");
         return(EXIT_FAILURE);
     }
 
@@ -53,12 +52,12 @@ int read_Matrix(
     }
     else if(mm_is_complex(matcode))
     {
-        fprintf(stderr, "[ERROR]: matrix_reader.c: Complex Matrix not supported\n");
+        if(my_rank==0) fprintf(stderr, "[ERROR]: matrix_reader.c: Complex Matrix not supported\n");
         return(EXIT_FAILURE);
     }
     else
     {
-        fprintf(stderr, "[ERROR]: matrix_reader.c: Matrix type not recognised\n");
+        if(my_rank==0) fprintf(stderr, "[ERROR]: matrix_reader.c: Matrix type not recognised\n");
         return(EXIT_FAILURE);
     }
 
@@ -86,6 +85,7 @@ int get_line(
         real_t* vals)
 {
     int row;
+    int my_rank; MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     if(cols == NULL && rows == NULL) // Throwing line away
     {
         fscanf(f, "");
@@ -93,14 +93,14 @@ int get_line(
     }
     else if(cols == NULL || rows == NULL)
     {
-        fprintf(stderr, "[ERROR]: matrix_reader.c: error in 'get_line()' arguments\n");
+        if(my_rank==0) fprintf(stderr, "[ERROR]: matrix_reader.c: error in 'get_line()' arguments\n");
         return(EXIT_FAILURE);
     }
     else if(vals == NULL) // Matrix is binary
     {
         if (fscanf(f, "%d %d", &row, &cols[i]) != 2)
         {
-            fprintf(stderr, "[ERROR]: matrix_reader.c: Problem while reading line, expected 2 element\n");
+            if(my_rank==0) fprintf(stderr, "[ERROR]: matrix_reader.c: Problem while reading line, expected 2 element\n");
             return(EXIT_FAILURE);
         }
     }
@@ -112,7 +112,7 @@ int get_line(
         if (fscanf(f, "%d %d %f\n", &row, &cols[i], &vals[i]) != 3)
 #endif
         {
-            fprintf(stderr, "[ERROR]: matrix_reader.c: Problem while reading line, expected 3 element\n");
+            if(my_rank==0) fprintf(stderr, "[ERROR]: matrix_reader.c: Problem while reading line, expected 3 element\n");
             return(EXIT_FAILURE);
         }
     }

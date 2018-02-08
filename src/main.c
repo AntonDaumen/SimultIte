@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <mpi.h>
 
 #include "executable_options.h"
 #include "matrix_reader.h"
@@ -22,6 +23,10 @@ int main(
         char *argv[],
         char *env[])
 {
+    MPI_Init(&argc, &argv);
+    int num_proc; MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
+    int my_rank;  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+
     parse_argument(argc, argv, env);
     csrMatrix mat;
     int err;
@@ -29,8 +34,12 @@ int main(
     err = read_Matrix(commandLineOptions.infilePath, &mat);
     if(err == EXIT_FAILURE)
     {
-        fprintf(stderr,"[ERROR]: Error while reading matrix\n");
-        exit(EXIT_FAILURE);
+        if (my_rank == 0)
+        {
+            fprintf(stderr,"[ERROR]: Error while reading matrix\n");
+        }
+        MPI_Finalize();
+        return(EXIT_FAILURE);
     }
 
 
@@ -114,5 +123,6 @@ int main(
 
     cl_free(platforms, devices, context, queue, createResult);
 
+    MPI_Finalize();
     return EXIT_SUCCESS;
 }
