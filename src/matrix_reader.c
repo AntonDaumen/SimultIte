@@ -20,7 +20,7 @@ int read_Matrix(
     // Opening File
     if ((f = fopen(filename, "r")) == NULL)
     {
-        fprintf(stderr, "[ERROR]: matrix_reader.c: FILE NOT FOUND\n\n");
+        fprintf(stderr, "[ERROR]: matrix_reader.c: FILE NOT FOUND\n");
         return(EXIT_FAILURE);
     }
 

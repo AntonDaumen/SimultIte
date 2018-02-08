@@ -23,9 +23,15 @@ int main(
         char *env[])
 {
     parse_argument(argc, argv, env);
-
     csrMatrix mat;
-    read_Matrix(commandLineOptions.infilePath, &mat);
+    int err;
+    
+    err = read_Matrix(commandLineOptions.infilePath, &mat);
+    if(err == EXIT_FAILURE)
+    {
+        fprintf(stderr,"[ERROR]: Error while reading matrix\n");
+        exit(EXIT_FAILURE);
+    }
 
 
     cl_platform_id       *platforms;
