@@ -25,7 +25,7 @@ int main(
     parse_argument(argc, argv, env);
     csrMatrix mat;
     int err;
-    
+
     err = read_Matrix(commandLineOptions.infilePath, &mat);
     if(err == EXIT_FAILURE)
     {
@@ -56,12 +56,34 @@ int main(
     cl_print_matrix(&d_mat, queue);
 
     cldenseVector *x;
-    x = malloc(commandLineOptions.num*sizeof(cldenseVector));
+    cldenseVector w;
+    cldenseVector randVect;
+    clsparseScalar h;
+
+    clsparseInitVector(&w);
+    w.values = clCreateBuffer(context, CL_MEM_READ_WRITE, d_mat.num_rows * sizeof(real_t),
+                NULL, &cl_status);
+    clsparseInitVector(&randVect);
+    randVect.values = clCreateBuffer(context, CL_MEM_READ_WRITE, d_mat.num_rows * sizeof(real_t),
+                NULL, &cl_status);
+    clsparseInitScalar(&h);
+    h.value = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(real_t),
+                NULL, &cl_status);
+
+    x = malloc((commandLineOptions.num+1)*sizeof(cldenseVector));
     real_t * init;
     srand(SEED);
     init = malloc(sizeof(real_t)*d_mat.num_rows);
-    
-    for (int i = 0; i< commandLineOptions.num; ++i) {
+
+    for(int j = 0; j<d_mat.num_rows; ++j)
+    {
+        init[j]=((real_t) rand())/RAND_MAX;
+    }
+    cl_status = clEnqueueWriteBuffer(queue, randVect.values, CL_TRUE, 0, d_mat.num_rows * sizeof(real_t),
+            init, 0, NULL, NULL);
+
+    for (int i = 0; i< commandLineOptions.num+1; ++i)
+    {
         clsparseInitVector(x+i);
 
         (x+i)->values = clCreateBuffer(context, CL_MEM_READ_WRITE, d_mat.num_rows * sizeof(real_t),
@@ -69,7 +91,8 @@ int main(
         (x+i)->num_values = d_mat.num_rows;
 
         // Fill x buffer with ones;
-        for(int j = 0; j<d_mat.num_rows; ++j) { 
+        for(int j = 0; j<d_mat.num_rows; ++j)
+        {
             init[j]=((real_t) rand())/RAND_MAX;
         }
         cl_status = clEnqueueWriteBuffer(queue, (x+i)->values, CL_TRUE, 0, d_mat.num_rows * sizeof(real_t),
@@ -81,11 +104,51 @@ int main(
 /******* CORE ALGORITHM *******/
     unsigned nb_iter = NB_ITER;
     real_t tolerance = 1;
-    while(nb_iter-- && tolerance > MAX_TOL) {
+
+    while(nb_iter-- && tolerance > MAX_TOL)
+    {
 #ifdef DOUBLE_PRECISION
+        cldenseDnrm1(&norm_x, &randVect, createResult.control);
+        clsparseScalarDinv(&norm_x, createResult.control);
 
+        cldenseDscale(x+0, &norm_x, &randVect, createResult.control);
+
+        for(int k=1; k<commandLineOptions.num; ++k)
+        {
+            clsparseDcsrmv(&one_S, &d_mat, x+k, &zero_S, &w, createResult.control);
+            cldenseDscale(&w, &minusOne_S, &w, createResult.control);
+            for (int j=1; j<k; ++j)
+            {
+                cldenseDdot(&h, &w, &randVect, createResult.control);
+                cldenseDaxpy(&w, &h, x+j, &w, createResult.control);
+            }
+            cldenseDscale(&w, &minusOne_S, &w, createResult.control);
+
+            cldenseDnrm1(&h, &w, createResult.control);
+            clsparseScalarDinv(&h, createResult.control);
+            cldenseDscale(x+k+1, &h, &w, createResult.control);
+        }
 #else
+        cldenseSnrm1(&norm_x, &randVect, createResult.control);
+        clsparseScalarSinv(&norm_x, createResult.control);
 
+        cldenseSscale(x+0, &norm_x, &randVect, createResult.control);
+
+        for(int k=1; k<commandLineOptions.num; ++k)
+        {
+            clsparseScsrmv(&one_S, &d_mat, x+k, &zero_S, &w, createResult.control);
+            cldenseSscale(&w, &minusOne_S, &w, createResult.control);
+            for (int j=1; j<k; ++j)
+            {
+                cldenseSdot(&h, &w, &randVect, createResult.control);
+                cldenseSaxpy(&w, &h, x+j, &w, createResult.control);
+            }
+            cldenseSscale(&w, &minusOne_S, &w, createResult.control);
+
+            cldenseSnrm1(&h, &w, createResult.control);
+            clsparseScalarSinv(&h, createResult.control);
+            cldenseSscale(x+k+1, &h, &w, createResult.control);
+        }
 #endif
     gram_schmidt(x, commandLineOptions.num, &context, createResult.control);
 #ifdef DOUBLE_PRECISION
@@ -94,8 +157,10 @@ int main(
 
 #endif
     }
+
 /******* GET THE DATA *******/
-    for (int i = 0 ; i< commandLineOptions.num; ++i) {
+    for (int i = 0 ; i< commandLineOptions.num+1; ++i)
+    {
         cldenseSnrm2(&norm_x, x+i, createResult.control);
         // Read  result
         real_t* host_norm_x =
@@ -110,6 +175,8 @@ int main(
 
     // Free memory
     clReleaseMemObject(norm_x.value);
+    clReleaseMemObject(h.value);
+    clReleaseMemObject(w.values);
     cl_free_matrix(&d_mat);
 
     cl_free(platforms, devices, context, queue, createResult);
