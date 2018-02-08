@@ -9,6 +9,8 @@
 
 cldenseVector  one_V;
 clsparseScalar minusOne_S;
+clsparseScalar one_S;
+clsparseScalar zero_S;
 
 void cl_init(
 		cl_platform_id       **platforms,
@@ -71,7 +73,7 @@ void cl_init(
     *context = clCreateContext(NULL, 1, *devices, NULL, NULL, NULL);
     *queue = clCreateCommandQueue(*context, *devices[0], 0, NULL);
 
-    // Initialize one_V and minusOne_S constant
+    // Initialize one_V, minusOne_S, one_S and zero_S constant
 
     clsparseInitVector(&one_V);
     one_V.values = clCreateBuffer(*context, CL_MEM_READ_ONLY, sizeof(real_t),
@@ -79,13 +81,27 @@ void cl_init(
     one_V.num_values = 1;
     real_t oneFloat = 1.0f;
     cl_status = clEnqueueFillBuffer(*queue, one_V.values, &oneFloat, sizeof(real_t),
-
             0, sizeof(real_t), 0, NULL, NULL);
+
+    clsparseInitScalar(&one_S);
+    one_S.value = clCreateBuffer(*context, CL_MEM_READ_ONLY, sizeof(real_t),
+            NULL, &cl_status);
+    oneFloat = 1.0f;
+    cl_status = clEnqueueFillBuffer(*queue, one_S.value, &oneFloat, sizeof(real_t),
+            0, sizeof(real_t), 0, NULL, NULL);
+
     clsparseInitScalar(&minusOne_S);
     minusOne_S.value = clCreateBuffer(*context, CL_MEM_READ_ONLY, sizeof(real_t),
             NULL, &cl_status);
     oneFloat = -1.0f;
     cl_status = clEnqueueFillBuffer(*queue, minusOne_S.value, &oneFloat, sizeof(real_t),
+            0, sizeof(real_t), 0, NULL, NULL);
+
+    clsparseInitScalar(&zero_S);
+    zero_S.value = clCreateBuffer(*context, CL_MEM_READ_ONLY, sizeof(real_t),
+            NULL, &cl_status);
+    oneFloat = 0.0f;
+    cl_status = clEnqueueFillBuffer(*queue, zero_S.value, &oneFloat, sizeof(real_t),
             0, sizeof(real_t), 0, NULL, NULL);
 
     clsparseStatus status = clsparseSetup();
