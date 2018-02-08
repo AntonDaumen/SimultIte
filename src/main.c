@@ -58,8 +58,11 @@ int main(
     norm_x.value = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(real_t),
                 NULL, &cl_status);
 
-    print_mat(&mat);
-    cl_print_matrix(&d_mat, queue);
+    if(my_rank == 0)
+    {
+        //print_mat(&mat);
+        cl_print_matrix(&d_mat, queue);
+    }
 
     cldenseVector *x;
     cldenseVector w;
@@ -156,7 +159,7 @@ int main(
             cldenseSscale(x+k+1, &h, &w, createResult.control);
         }
 #endif
-    gram_schmidt(x, commandLineOptions.num, &context, createResult.control);
+        gram_schmidt(x, commandLineOptions.num, &context, createResult.control);
 #ifdef DOUBLE_PRECISION
 
 #else
@@ -169,12 +172,12 @@ int main(
     for (int i = 0 ; i< commandLineOptions.num+1; ++i)
     {
         cldenseSnrm2(&norm_x, x+i, createResult.control);
-        // Read  result
+        // Read result
         real_t *host_norm =
             clEnqueueMapBuffer(queue, norm_x.value, CL_TRUE, CL_MAP_READ, 0, sizeof(real_t),
                     0, NULL, NULL, &cl_status);
 
-        printf("Result : %.16f\n", *host_norm);
+        if (my_rank==0) printf("Result : %.16f\n", *host_norm);
         cl_status = clEnqueueUnmapMemObject(queue, norm_x.value, host_norm,
                 0, NULL, NULL);
         clReleaseMemObject((x+i)->values);
