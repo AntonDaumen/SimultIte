@@ -64,10 +64,12 @@ int main(
         cl_print_matrix(&d_mat, queue);
     }
 
-    cldenseVector *x;
-    cldenseVector w;
-    cldenseVector randVect;
+    cldenseVector *x;//eigenvalues
+    cldenseVector *y;//eigenvalues of the reduced problem
+	cldenseVector w;
+    cldenseVector randVect;//used for Arnoldi's projection
     clsparseScalar h;
+	cldenseMatrix H;
 
     clsparseInitVector(&w);
     w.values = clCreateBuffer(context, CL_MEM_READ_WRITE, d_mat.num_rows * sizeof(real_t),
@@ -80,7 +82,8 @@ int main(
                 NULL, &cl_status);
 
     x = malloc((commandLineOptions.num+1)*sizeof(cldenseVector));
-    real_t * init;
+    y = malloc((commandLineOptions.num+1)*sizeof(cldenseVector));
+	real_t * init;
     srand(SEED);
     init = malloc(sizeof(real_t)*d_mat.num_rows);
 
@@ -99,7 +102,7 @@ int main(
                 NULL, &cl_status);
         (x+i)->num_values = d_mat.num_rows;
 
-        // Fill x buffer with ones;
+        // Fill x buffer with random values
         for(int j = 0; j<d_mat.num_rows; ++j)
         {
             init[j]=((real_t) rand())/RAND_MAX;
@@ -163,14 +166,26 @@ int main(
     while(nb_iter-- && tolerance > MAX_TOL)
     {
         /***** Simultaneous Iteration Method on the matrix H computed with the Arnoldi factorization*****/
-        gram_schmidt(x, commandLineOptions.num, &context, createResult.control);
+		for(int k=0; k<commandLineOptions.num; ++k)
+			{
+#ifdef DOUBLE_PRECISION
+    		  	//cldenseDmul(y+k, H, y+k, createResult.control);
+#else
+				//cldenseSmul(y+k, H, y+k, createResult.control);
+#endif
+			}
+		gram_schmidt(x, commandLineOptions.num, &context, createResult.control);
     }
 
-// Recover the eigenvectors in the big space by computing u_i = Q_m y_i with y_i the eigenvectors of the Simultaneous Iteration Method, belonging to the Krylov subspace
+// Recover the eigenvectors in the big space by computing x_i = Q_m y_i with y_i the eigenvectors of the Simultaneous Iteration Method, belonging to the Krylov subspace
+	for(int k=0; k<commandLineOptions.num; ++k)
+	{
 #ifdef DOUBLE_PRECISION
+		//cldenseDmul(x+k, Q, y+k, createResult.control);
 #else
+		//cldenseSmul(x+k, Q, y+k, createResult.control);
 #endif
-
+	}
 /******* GET THE DATA *******/
     real_t error;
     for (int i = 0 ; i< commandLineOptions.num+1; ++i)
