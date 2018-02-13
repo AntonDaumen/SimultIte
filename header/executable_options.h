@@ -19,12 +19,14 @@
 /// \brief Structure of command line options for the executable
 struct CommandLineOptions_t
 {
-	/// Size of the \a infilePath array
-	unsigned sizePath;
-	/// Array of the path to the file descripting the matrix
-	char     *infilePath;
-	// Number of vectors to compute
-	unsigned long long num;
+    /// Size of the \a infilePath array
+    unsigned sizePath;
+    /// Array of the path to the file descripting the matrix
+    char     *infilePath;
+    /// Number of vectors to compute
+    unsigned long long num;
+    /// Size of the Krylov Subspace
+    unsigned long long kryl;
 };
 
 typedef struct CommandLineOptions_t CommandLineOptions_t;

@@ -1,4 +1,4 @@
-/** 
+/**
  * \author Daumen Anton and Nicolas Derumigny
  * \file executable_options.c
  * \brief Definition of the tools for the command-line options.
@@ -23,11 +23,12 @@ void parse_argument(
 	static struct option long_options[]={
 		{"infile", required_argument, NULL, 'i'},
 		{"num",    required_argument, NULL, 'n'},
+		{"kryl",   required_argument, NULL, 'k'},
 		{"help",   no_argument,       NULL, 'h'}
 	};
 
 	int opt;
-	while ((opt = getopt_long(argc, argv, "i:n:h", long_options, NULL)) != -1)
+	while ((opt = getopt_long(argc, argv, "i:n:k:h", long_options, NULL)) != -1)
 	{
 		switch (opt)
 		{
@@ -47,6 +48,15 @@ void parse_argument(
 			}
 			break;
 
+            case 'k':
+			errno = 0;
+			commandLineOptions.kryl = strtoll(optarg, NULL, 10);
+			if (errno || strtoll(optarg, NULL, 10) <= 0)
+			{
+				goto help;
+			}
+			break;
+
 			case 'h':
 			ret = EXIT_SUCCESS;
 			goto help;
@@ -55,13 +65,18 @@ void parse_argument(
 			default:
 			help:
 			if (my_rank == 0)
-				fprintf(stderr, "Usage: mpirun -n num_process %s {-i | --infile} infile {-n | --num} number_of_eigenvalues [-h]\n", argv[0]);
+				fprintf(stderr, "Usage: mpirun -n num_process %s {-i | --infile} infile {-n | --num} number_of_eigenvalues {-k | --kryl} krylov subspace size [-h]\n", argv[0]);
 			exit(ret);
 			break;
 		}
 	}
-	if (commandLineOptions.sizePath == 0 || commandLineOptions.num == 0)
+	if (commandLineOptions.sizePath == 0 || commandLineOptions.num == 0 || commandLineOptions.kryl == 0)
 	{
 		goto help;
 	}
+    if (commandLineOptions.kryl < commandLineOptions.num)
+    {
+        fprintf(stderr, "Krylov Subspace size must be bigger or equal to the number off eigenvalue requested\n");
+        goto help;
+    }
 }
