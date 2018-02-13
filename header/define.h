@@ -9,7 +9,7 @@
 #define _DEFINE_H_
 
 #ifndef NB_ITER
-#define NB_ITER 500
+#define NB_ITER 1000
 #endif
 #ifndef MAX_TOL
 #define MAX_TOL 1e-8

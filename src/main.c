@@ -253,7 +253,7 @@ int main(
                    shift += ((cur_nrm[k] < pred_nrm[k]) ? (pred_nrm[k] - cur_nrm[k]) : (cur_nrm[k] - pred_nrm[k]));
                 }
 
-                printf("Partial Error : %g\n", shift);
+                printf("P%d: Partial Error : %g\n", my_rank, shift);
             }
 
             real_t *tmp;
