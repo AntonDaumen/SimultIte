@@ -90,8 +90,8 @@ int main(
             0, (M+1) * M * sizeof(real_t), 0, NULL, NULL);
 
     clsparseInitCsrMatrix(&H_csr);
-    H_csr.values = clCreateBuffer(context, CL_MEM_READ_WRITE, (M) * M * sizeof(real_t), NULL, &cl_status);
-    H_csr.col_indices = clCreateBuffer(context, CL_MEM_READ_WRITE, (M) * M * sizeof(clsparseIdx_t), NULL, &cl_status);
+    H_csr.values = clCreateBuffer(context, CL_MEM_READ_WRITE, M * M * sizeof(real_t), NULL, &cl_status);
+    H_csr.col_indices = clCreateBuffer(context, CL_MEM_READ_WRITE, M * M * sizeof(clsparseIdx_t), NULL, &cl_status);
     H_csr.row_pointer = clCreateBuffer(context, CL_MEM_READ_WRITE, (M + 1) * sizeof(clsparseIdx_t), NULL, &cl_status);
 
     x = malloc((commandLineOptions.num)*sizeof(cldenseVector));
@@ -147,27 +147,27 @@ int main(
     unsigned nb_iter = NB_ITER;
     real_t tolerance = 1;
 
-/**** Arnoli Projection *****/
+/**** Arnodli Projection *****/
 #ifdef DOUBLE_PRECISION
         cldenseDnrm2(&norm_x, q+0, createResult.control);
         clsparseScalarDinv(&norm_x, createResult.control);
 
         cldenseDscale(q+0, &norm_x, q+0, createResult.control);
 
-        for(int k=1; k<M; ++k)
+        for(int k=1; k<=M; ++k)
         {
             clsparseDcsrmv(&one_S, &d_mat, q+k-1, &zero_S, q+k, createResult.control);
             cldenseDscale(q+k, &minusOne_S, q+k, createResult.control);
             for (int j=0; j<k; ++j)
             {
-                h_offset.origin = sizeof(real_t) * (j * M + k - 1);
+                h_offset.origin = sizeof(real_t) * ((j * M) + (k - 1));
                 h.value = clCreateSubBuffer(H.values, CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &h_offset, NULL);
                 cldenseDdot(&h, q+j, q+k, createResult.control);
                 cldenseDaxpy(q+k, &h, q+j, q+k, createResult.control);
             }
             cldenseDscale(q+k, &minusOne_S, q+k, createResult.control);
 
-            h_offset.origin = sizeof(real_t) * (k * M + k - 1);
+            h_offset.origin = sizeof(real_t) * ((k * M) + (k - 1));
             h.value = clCreateSubBuffer(H.values, CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &h_offset, NULL);
             cldenseDnrm2(&h, q+k, createResult.control);
             clsparseScalarDinv(&h, createResult.control);
@@ -188,15 +188,14 @@ int main(
             clsparseScsrmv(&one_S, &d_mat, q+k-1, &zero_S, q+k, createResult.control);
             for (int j=0; j<k; ++j)
             {
-                h_offset.origin = sizeof(real_t) * (j * M + (k-1));
+                h_offset.origin = sizeof(real_t) * ((j * M) + (k-1));
                 h.value = clCreateSubBuffer(H.values, CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &h_offset, NULL);
                 cldenseSdot(&h, q+j, q+k, createResult.control);
                 clsparseScalarSopos(&h, createResult.control);
                 cldenseSaxpy(q+k, &h, q+j, q+k, createResult.control);
                 clsparseScalarSopos(&h, createResult.control); //Because we keep h
             }
-
-            h_offset.origin = sizeof(real_t) * (k * M + k - 1);
+            h_offset.origin = sizeof(real_t) * ((k * M) + (k - 1));
             h.value = clCreateSubBuffer(H.values, CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &h_offset, NULL);
             cldenseSnrm2(&h, q+k, createResult.control);
             clsparseScalarSinv(&h, createResult.control);
@@ -338,7 +337,7 @@ int main(
         for (int i=1; i<num_proc; ++i)
         {
             array_min[i]=0;
-            if (min<errors[i])
+            if (min>errors[i])
             {
                 min = errors[i];
                 array_min[min_index]=0;
