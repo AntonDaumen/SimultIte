@@ -15,6 +15,8 @@
 #define MAX_TOL 1e-8
 #endif
 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #ifdef DOUBLE_PRECISION
 typedef double real_t;
 #else

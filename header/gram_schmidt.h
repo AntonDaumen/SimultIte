@@ -30,4 +30,11 @@ clsparseStatus clsparseScalarDinv(
 	clsparseScalar  *scalar,
 	clsparseControl control);
 
+clsparseStatus clsparseScalarDopos(
+	clsparseScalar *scalar,
+	clsparseControl control);
+
+clsparseStatus clsparseScalarSopos(
+	clsparseScalar *scalar,
+	clsparseControl control);
 #endif

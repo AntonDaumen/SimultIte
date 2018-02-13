@@ -79,9 +79,6 @@ int main(
     w.values = clCreateBuffer(context, CL_MEM_READ_WRITE, d_mat.num_rows * sizeof(real_t),
                 NULL, &cl_status);
     clsparseInitScalar(&h);
-//    h.value = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(real_t),
-//                NULL, &cl_status);
-
 
     cldenseInitMatrix(&H);
     H.values = clCreateBuffer(context, CL_MEM_READ_WRITE, (M+1) * M * sizeof(real_t),
@@ -92,13 +89,13 @@ int main(
     clEnqueueFillBuffer(queue, H.values, &zero_S, sizeof(real_t),
             0, (M+1) * M * sizeof(real_t), 0, NULL, NULL);
 
-    clsparseInitCsrMatrix(&H_csr); //TODO: Change sizes
+    clsparseInitCsrMatrix(&H_csr);
     H_csr.values = clCreateBuffer(context, CL_MEM_READ_WRITE, (M) * M * sizeof(real_t), NULL, &cl_status);
     H_csr.col_indices = clCreateBuffer(context, CL_MEM_READ_WRITE, (M) * M * sizeof(clsparseIdx_t), NULL, &cl_status);
-    H_csr.row_pointer = clCreateBuffer(context, CL_MEM_READ_WRITE, (M * M) * sizeof(clsparseIdx_t), NULL, &cl_status);
+    H_csr.row_pointer = clCreateBuffer(context, CL_MEM_READ_WRITE, (M + 1) * sizeof(clsparseIdx_t), NULL, &cl_status);
 
     x = malloc((commandLineOptions.num)*sizeof(cldenseVector));
-    y = malloc((commandLineOptions.kryl)*sizeof(cldenseVector));
+    y = malloc((commandLineOptions.num)*sizeof(cldenseVector));
     q = malloc((commandLineOptions.kryl + 1)*sizeof(cldenseVector));
 	real_t *init;
     srand(SEED+my_rank);
@@ -110,12 +107,14 @@ int main(
 
         (q+i)->values = clCreateBuffer(context, CL_MEM_READ_WRITE, d_mat.num_rows * sizeof(real_t),
                 NULL, &cl_status);
-        (q+i)->num_values = M;
+        (q+i)->num_values = d_mat.num_rows;
+    }
+    for(int j = 0; j<d_mat.num_rows; ++j)
+    {
+        init[j]=((real_t) rand())/RAND_MAX;
     }
     cl_status = clEnqueueWriteBuffer(queue, (q+0)->values, CL_TRUE, 0, d_mat.num_rows * sizeof(real_t),
             init, 0, NULL, NULL);
-    real_t* valuess = clEnqueueMapBuffer(queue, (q+0)->values, CL_TRUE, CL_MAP_READ, 0, d_mat.num_rows * sizeof(real_t), 0, NULL, NULL, &cl_status);
-
     for (int i = 0; i< commandLineOptions.num; ++i)
     {
         clsparseInitVector(x+i);
@@ -149,9 +148,8 @@ int main(
     real_t tolerance = 1;
 
 /**** Arnoli Projection *****/
-    //TODO : keep H as a matrix
 #ifdef DOUBLE_PRECISION
-        cldenseDnrm1(&norm_x, q+0, createResult.control);
+        cldenseDnrm2(&norm_x, q+0, createResult.control);
         clsparseScalarDinv(&norm_x, createResult.control);
 
         cldenseDscale(q+0, &norm_x, q+0, createResult.control);
@@ -171,16 +169,16 @@ int main(
 
             h_offset.origin = sizeof(real_t) * (k * M + k - 1);
             h.value = clCreateSubBuffer(H.values, CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &h_offset, NULL);
-            cldenseDnrm1(&h, q+k, createResult.control);
+            cldenseDnrm2(&h, q+k, createResult.control);
             clsparseScalarDinv(&h, createResult.control);
             cldenseDscale(q+k, &h, q+k, createResult.control);
-            clsparseDcalarSinv(&h, createResult.control); //Because we keep h
+            clsparseScalarDinv(&h, createResult.control); //Because we keep h
         }
 
         clsparseDdense2csr(&H, &H_csr, createResult.control);
         clsparseCsrMetaCreate(&H_csr, createResult.control);
 #else
-        cldenseSnrm1(&norm_x, q+0, createResult.control);
+        cldenseSnrm2(&norm_x, q+0, createResult.control);
         clsparseScalarSinv(&norm_x, createResult.control);
 
         cldenseSscale(q+0, &norm_x, q+0, createResult.control);
@@ -188,19 +186,19 @@ int main(
         for(int k=1; k<=M; ++k)
         {
             clsparseScsrmv(&one_S, &d_mat, q+k-1, &zero_S, q+k, createResult.control);
-            cldenseSscale(q+k, &minusOne_S, q+k, createResult.control);
-            for (int j=0; j<=k; ++j)
+            for (int j=0; j<k; ++j)
             {
                 h_offset.origin = sizeof(real_t) * (j * M + (k-1));
                 h.value = clCreateSubBuffer(H.values, CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &h_offset, NULL);
                 cldenseSdot(&h, q+j, q+k, createResult.control);
+                clsparseScalarSopos(&h, createResult.control);
                 cldenseSaxpy(q+k, &h, q+j, q+k, createResult.control);
+                clsparseScalarSopos(&h, createResult.control); //Because we keep h
             }
-            cldenseSscale(q+k, &minusOne_S, q+k, createResult.control);
 
             h_offset.origin = sizeof(real_t) * (k * M + k - 1);
             h.value = clCreateSubBuffer(H.values, CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &h_offset, NULL);
-            cldenseSnrm1(&h, q+k, createResult.control);
+            cldenseSnrm2(&h, q+k, createResult.control);
             clsparseScalarSinv(&h, createResult.control);
             cldenseSscale(q+k, &h, q+k, createResult.control);
             clsparseScalarSinv(&h, createResult.control); //Because we keep h
@@ -208,10 +206,13 @@ int main(
         clsparseSdense2csr(&H, &H_csr, createResult.control);
         clsparseCsrMetaCreate(&H_csr, createResult.control);
 #endif
-        cl_print_matrix(&H_csr, queue);
-        int rwptr[4]= { 0, 3, 6, 9 };
-        clEnqueueWriteBuffer(queue, H_csr.row_pointer, CL_TRUE, 0, sizeof(int) * 4, rwptr, 0, NULL, NULL);
-        cl_print_matrix(&H_csr, queue);
+        int* rwptr = malloc( (H_csr.num_rows + 1) * sizeof(int));
+        for(int i=0; i < H_csr.num_rows + 1; ++i)
+        {
+            rwptr[i] = i*H_csr.num_cols;
+
+        }
+        clEnqueueWriteBuffer(queue, H_csr.row_pointer, CL_TRUE, 0, sizeof(real_t) * (H_csr.num_rows + 1), rwptr, 0, NULL, NULL);
 
         real_t *pred_nrm, *cur_nrm, shift = 0.0;
         pred_nrm = malloc(commandLineOptions.num * sizeof(real_t));
@@ -224,33 +225,24 @@ int main(
             /***** Simultaneous Iteration Method on the matrix H computed with the Arnoldi factorization*****/
             for(int k=0; k<commandLineOptions.num; ++k)
             {
-                real_t *values = clEnqueueMapBuffer(queue, (y+k)->values, CL_TRUE, CL_MAP_READ, 0, sizeof(real_t) * M, 0, NULL, NULL, &cl_status);
-                printf("!!!!Values: ");
-                for(int i=0; i < M; ++i)
-                {
-                    printf("%f ", values[i]);
-                }
-                printf("\n");
 #ifdef DOUBLE_PRECISION
                 clsparseDcsrmv(&one_S, &H_csr, y+k, &zero_S, y+k, createResult.control);
-                //    		  	cldenseDmul(y+k, H_csr, y+k, createResult.control);
 #else
                 clsparseScsrmv(&one_S, &H_csr, y+k, &zero_S, y+k, createResult.control);
-                //				cldenseSmul(y+k, H_csr, y+k, createResult.control);
 #endif
             }
+
             gram_schmidt(y, commandLineOptions.num, &context, createResult.control);
 
             // Tolerance check
             for(int k=0; k<commandLineOptions.num; ++k)
             {
 #ifdef DOUBLE_PRECISION
-            cldenseDnrm1(&y_nrm, y+k, createResult.control);
+            cldenseDnrm2(&y_nrm, y+k, createResult.control);
 #else
-            cldenseSnrm1(&y_nrm, y+k, createResult.control);
+            cldenseSnrm2(&y_nrm, y+k, createResult.control);
 #endif
             real_t *nrm = clEnqueueMapBuffer(queue, y_nrm.value, CL_TRUE, CL_MAP_READ, 0, sizeof(real_t), 0, NULL, NULL, &cl_status);
-            printf("!! %f\n", *nrm);
             cur_nrm[k] = (*nrm);
             }
 
@@ -259,11 +251,10 @@ int main(
                 shift = 0.0;
                 for(int k=0; k<commandLineOptions.num; ++k)
                 {
-                   printf("%f = |%f - %f|\n", shift, cur_nrm[k], pred_nrm[k]);
                    shift += ((cur_nrm[k] < pred_nrm[k]) ? (pred_nrm[k] - cur_nrm[k]) : (cur_nrm[k] - pred_nrm[k]));
                 }
 
-                printf("Partial Error : %f\n", shift);
+                printf("Partial Error : %g\n", shift);
             }
 
             real_t *tmp;
@@ -282,10 +273,8 @@ int main(
                 y_scal.value = clCreateSubBuffer((y+k)->values, CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &h_offset, NULL);
 #ifdef DOUBLE_PRECISION
                 cldenseDaxpy(x+k, &y_scal, q+i, x+k, createResult.control);
-                //cldenseDmul(x+k, Q, y+k, createResult.control);
 #else
                 cldenseSaxpy(x+k, &y_scal, q+i, x+k, createResult.control);
-                //cldenseSmul(x+k, Q, y+k, createResult.control);
 #endif
             }
 
@@ -309,19 +298,18 @@ int main(
 
         for (int i = 0 ; i< commandLineOptions.num; ++i)
         {
-            //error = sum norm( (A - lambda_i . Id) u_i) )
 #ifdef DOUBLE_PRECISION
             clsparseDcsrmv(&one_S, &d_mat, x+i, &zero_S, &ax_vect, createResult.control);
-            cldenseDnrm1(&norm_x, x+i, createResult.control);
+            cldenseDnrm2(&norm_x, x+i, createResult.control);
             cldenseDscale(&lx_vect, &norm_x, x+i, createResult.control);
             cldenseDsub(&err_vect, &ax_vect, &lx_vect, createResult.control);
-            cldenseDnrm1(&norm_x, &err_vect, createResult.control);
+            cldenseDnrm2(&norm_x, &err_vect, createResult.control);
 #else
             clsparseScsrmv(&one_S, &d_mat, x+i, &zero_S, &ax_vect, createResult.control);
-            cldenseSnrm1(&norm_x, x+i, createResult.control);
+            cldenseSnrm2(&norm_x, x+i, createResult.control);
             cldenseSscale(&lx_vect, &norm_x, x+i, createResult.control);
             cldenseSsub(&err_vect, &ax_vect, &lx_vect, createResult.control);
-            cldenseSnrm1(&norm_x, &err_vect, createResult.control);
+            cldenseSnrm2(&norm_x, &err_vect, createResult.control);
 #endif
             real_t *err = clEnqueueMapBuffer(queue, norm_x.value, CL_TRUE, CL_MAP_READ, 0, sizeof(real_t), 0, NULL, NULL, &cl_status);
             error += (*err);
@@ -362,6 +350,7 @@ int main(
     int is_min;
     MPI_Scatter(array_min, 1, MPI_INT, &is_min, 1, MPI_INT, 0, MPI_COMM_WORLD);
     if(is_min) {
+        printf("FINAL ERROR : %g\n", error);
         //TODO print eigenvalues here
     }
 
